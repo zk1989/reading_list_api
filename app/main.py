@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import FastAPI, Depends, Query
@@ -17,6 +18,13 @@ def get_session():
         yield session
 
 SessionDependency = Annotated[Session, Depends(get_session)]
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    create_books()
+    yield
 
 @app.get("/")
 async def root():
@@ -40,9 +48,3 @@ def create_books():
     with Session(engine) as session:
         session.add(book_1)
         session.commit()
-        session.refresh(book_1)
-        return book_1
-
-if __name__ == '__main__':
-    create_db_and_tables()
-    create_books()
